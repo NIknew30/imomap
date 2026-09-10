@@ -1,0 +1,40 @@
+<svg width="96" height="96" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="80" height="80" rx="19" fill="#0d0d0d"/>
+
+  <!-- Rechte Hälfte des Pins — gedimmt -->
+  <!-- Clip: nur rechts von der Mittellinie (x=40) -->
+  <clipPath id="right">
+    <rect x="40" y="0" width="40" height="80"/>
+  </clipPath>
+  <!-- Linke Hälfte des Pins — voll -->
+  <clipPath id="left">
+    <rect x="0" y="0" width="40" height="80"/>
+  </clipPath>
+
+  <!-- Volle Pin-Form, links -->
+  <path clip-path="url(#left)"
+    d="M40 11C28 11 19 20 19 31C19 45 40 69 40 69C40 69 61 45 61 31C61 20 52 11 40 11Z"
+    fill="#1a56db"/>
+
+  <!-- Gedimmte Pin-Form, rechts -->
+  <path clip-path="url(#right)"
+    d="M40 11C28 11 19 20 19 31C19 45 40 69 40 69C40 69 61 45 61 31C61 20 52 11 40 11Z"
+    fill="#1a56db" opacity="0.3"/>
+
+  <!-- Haus: linke Dachschräge (auf vollem Blau — dunkel) -->
+  <line x1="40" y1="23" x2="32" y2="31" stroke="#0d0d0d" stroke-width="1.7" stroke-linecap="round"/>
+  <!-- Haus: rechte Dachschräge (auf gedimmtem Blau — heller) -->
+  <line x1="40" y1="23" x2="48" y2="31" stroke="rgba(255,255,255,0.22)" stroke-width="1.7" stroke-linecap="round"/>
+
+  <!-- Linke Wand -->
+  <line x1="32" y1="31" x2="32" y2="41" stroke="#0d0d0d" stroke-width="1.7" stroke-linecap="round"/>
+  <!-- Rechte Wand -->
+  <line x1="48" y1="31" x2="48" y2="41" stroke="rgba(255,255,255,0.22)" stroke-width="1.7" stroke-linecap="round"/>
+
+  <!-- Boden — über die Mitte, links dunkel rechts heller -->
+  <line x1="32" y1="41" x2="40" y2="41" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="40" y1="41" x2="48" y2="41" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Tür — mittig auf der Trennlinie, links dunkel -->
+  <line x1="40" y1="35" x2="40" y2="41" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

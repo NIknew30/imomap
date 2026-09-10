@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – imomap.at</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:    #0d0d0d; --ink-2: #3a3a3a; --ink-3: #5a5a5a; --ink-4: #909090;
+      --bg:     #ffffff; --bg-2:  #f4f4f2; --bg-3:  #eaeae7;
+      --border: #dcdcd8; --accent: #1a56db; --accent-l: #eff6ff;
+      --red: #ef4444; --red-l: #fef2f2;
+      --green: #10b981; --green-l: #f0fdf4;
+      --yellow: #f59e0b; --yellow-l: #fffbeb;
+    }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; font-size: 13px;
+      line-height: 1.5; background: var(--bg); color: var(--ink);
+      -webkit-font-smoothing: antialiased; }
+
+    /* ── LOGIN ── */
+    #loginScreen { position: fixed; inset: 0; display: flex; align-items: center;
+      justify-content: center; background: var(--bg-2); z-index: 999; }
+    .login-card { background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 36px 32px; width: 340px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+    .login-card h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .login-card p { color: var(--ink-4); font-size: 12px; margin-bottom: 24px; }
+    .login-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .login-field label { font-size: 11px; font-weight: 500; color: var(--ink-3); }
+    .login-field input { border: 1px solid var(--border); border-radius: 7px;
+      padding: 9px 12px; font-size: 13px; font-family: inherit; outline: none;
+      transition: border-color .15s; }
+    .login-field input:focus { border-color: var(--accent); }
+    .login-btn { width: 100%; background: var(--accent); color: #fff; border: none;
+      border-radius: 7px; padding: 10px; font-size: 13px; font-weight: 500;
+      font-family: inherit; cursor: pointer; margin-top: 4px; transition: opacity .15s; }
+    .login-btn:hover { opacity: .88; }
+    .login-err { color: var(--red); font-size: 11px; margin-top: 8px; min-height: 16px; }
+
+    /* ── LAYOUT ── */
+    #app { display: none; height: 100vh; display: none; flex-direction: column; }
+    #app.visible { display: flex; }
+
+    .topbar { height: 52px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0; }
+    .topbar-logo { font-size: 15px; font-weight: 600; letter-spacing: -.4px; color: var(--ink); }
+    .topbar-logo span { color: var(--accent); }
+    .topbar-badge { background: var(--accent-l); color: var(--accent); font-size: 10px;
+      font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: .02em; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .topbar-user { font-size: 12px; color: var(--ink-3); }
+    .logout-btn { background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 5px 12px; font-size: 12px; font-family: inherit; cursor: pointer;
+      color: var(--ink-3); transition: background .12s; }
+    .logout-btn:hover { background: var(--bg-2); }
+
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: 200px; border-right: 1px solid var(--border); padding: 16px 0;
+      display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; background: var(--bg); }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 18px;
+      font-size: 12px; font-weight: 500; color: var(--ink-3); cursor: pointer;
+      border-radius: 0; transition: background .12s, color .12s; border: none;
+      background: none; width: 100%; text-align: left; font-family: inherit; }
+    .nav-item:hover { background: var(--bg-2); color: var(--ink); }
+    .nav-item.active { background: var(--accent-l); color: var(--accent); }
+    .nav-item svg { flex-shrink: 0; }
+    .nav-badge { margin-left: auto; background: var(--red); color: #fff;
+      font-size: 10px; font-weight: 600; border-radius: 10px; padding: 1px 6px;
+      min-width: 18px; text-align: center; }
+
+    /* ── CONTENT ── */
+    .content { flex: 1; overflow-y: auto; padding: 24px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .page-title { font-size: 16px; font-weight: 600; }
+    .page-count { font-size: 12px; color: var(--ink-4); }
+
+    /* ── STATS ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px 18px; }
+    .stat-label { font-size: 11px; color: var(--ink-4); font-weight: 500; margin-bottom: 6px; }
+    .stat-value { font-size: 24px; font-weight: 600; letter-spacing: -.5px; }
+    .stat-value.red { color: var(--red); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.yellow { color: var(--yellow); }
+
+    /* ── TABLE ── */
+    .table-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; }
+    .table-toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+      border-bottom: 1px solid var(--border); }
+    .search-input { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px;
+      font-size: 12px; font-family: inherit; outline: none; width: 220px;
+      transition: border-color .15s; }
+    .search-input:focus { border-color: var(--accent); }
+    .filter-sel { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px;
+      font-size: 12px; font-family: inherit; outline: none; background: var(--bg);
+      cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { text-align: left; font-size: 11px; font-weight: 600; color: var(--ink-4);
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      background: var(--bg-2); white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--border); cursor: pointer;
+      transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg-2); }
+    tbody tr.flagged { background: var(--red-l); }
+    tbody tr.flagged:hover { background: #fee2e2; }
+    td { padding: 10px 14px; font-size: 12px; vertical-align: middle; }
+    td.title-cell { font-weight: 500; max-width: 200px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px;
+      border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .badge-kaufen  { background: #dbeafe; color: #1e40af; }
+    .badge-mieten  { background: #e0f2fe; color: #075985; }
+    .badge-aktiv   { background: var(--green-l); color: #065f46; }
+    .badge-inaktiv { background: var(--bg-3); color: var(--ink-4); }
+    .badge-flagged { background: var(--red-l); color: #991b1b; }
+    .flag-icon { color: var(--red); font-size: 14px; }
+
+    /* ── DETAIL PANEL ── */
+    .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35);
+      z-index: 500; display: none; }
+    .detail-overlay.visible { display: block; }
+    .detail-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 480px;
+      background: var(--bg); border-left: 1px solid var(--border);
+      z-index: 501; display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform .25s ease; }
+    .detail-panel.visible { transform: translateX(0); }
+    .detail-head { padding: 18px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; }
+    .detail-head h2 { font-size: 14px; font-weight: 600; flex: 1;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .close-btn { background: none; border: none; cursor: pointer; color: var(--ink-4);
+      padding: 4px; border-radius: 5px; display: flex; transition: background .12s; }
+    .close-btn:hover { background: var(--bg-2); color: var(--ink); }
+    .detail-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .detail-actions { padding: 14px 20px; border-top: 1px solid var(--border);
+      display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { border-radius: 7px; padding: 8px 14px; font-size: 12px; font-weight: 500;
+      font-family: inherit; cursor: pointer; border: 1px solid var(--border);
+      transition: opacity .12s, background .12s; }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { opacity: .88; }
+    .btn-danger { background: var(--red); color: #fff; border-color: var(--red); }
+    .btn-danger:hover { opacity: .88; }
+    .btn-ghost { background: none; color: var(--ink-2); }
+    .btn-ghost:hover { background: var(--bg-2); }
+    .btn-warn { background: var(--yellow-l); color: #92400e; border-color: #fcd34d; }
+    .btn-warn:hover { opacity: .88; }
+
+    .detail-section { margin-bottom: 20px; }
+    .detail-section-title { font-size: 11px; font-weight: 600; color: var(--ink-4);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .detail-field { background: var(--bg-2); border-radius: 7px; padding: 10px 12px; }
+    .detail-field-label { font-size: 10px; color: var(--ink-4); margin-bottom: 2px; }
+    .detail-field-value { font-size: 12px; font-weight: 500; }
+    .detail-field.full { grid-column: 1 / -1; }
+
+    .meldung-card { background: var(--red-l); border: 1px solid #fca5a5;
+      border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+    .meldung-card-head { display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; color: #991b1b; margin-bottom: 4px; }
+    .meldung-card-body { font-size: 12px; color: var(--ink-2); }
+    .meldung-card-date { font-size: 10px; color: var(--ink-4); margin-top: 4px; }
+
+    .edit-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+    .edit-field label { font-size: 11px; font-weight: 500; color: var(--ink-3); }
+    .edit-field input, .edit-field select, .edit-field textarea {
+      border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
+      font-size: 12px; font-family: inherit; outline: none; background: var(--bg);
+      transition: border-color .15s; }
+    .edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus {
+      border-color: var(--accent); }
+    .edit-field textarea { resize: vertical; min-height: 80px; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #111; color: #fff; border-radius: 8px; padding: 10px 18px;
+      font-size: 12px; font-weight: 500; z-index: 999; opacity: 0;
+      transition: opacity .2s; pointer-events: none; }
+    .toast.visible { opacity: 1; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--ink-4); font-size: 13px; }
+
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      z-index: 600; display: none; align-items: center; justify-content: center; }
+    .confirm-overlay.visible { display: flex; }
+    .confirm-box { background: var(--bg); border-radius: 12px; padding: 24px 28px;
+      width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,.15); }
+    .confirm-box h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .confirm-box p { font-size: 12px; color: var(--ink-3); margin-bottom: 20px; }
+    .confirm-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+    @media (max-width: 768px) {
+      /* Login */
+      .login-card { width: calc(100vw - 32px); padding: 28px 20px; }
+
+      /* Topbar */
+      .topbar { padding: 0 16px; }
+      .topbar-user { display: none; }
+
+      /* Sidebar → bottom tab bar */
+      .main { flex-direction: column-reverse; }
+      .sidebar { width: 100%; height: 56px; border-right: none;
+        border-top: 1px solid var(--border); padding: 0;
+        flex-direction: row; justify-content: space-around;
+        align-items: center; flex-shrink: 0; }
+      .nav-item { flex-direction: column; gap: 3px; padding: 6px 12px;
+        font-size: 10px; align-items: center; width: auto; flex: 1;
+        justify-content: center; border-radius: 0; }
+      .nav-item svg { width: 18px; height: 18px; }
+      .nav-item.active { background: var(--accent-l); }
+      .nav-badge { margin-left: 0; margin-top: 2px; }
+
+      /* Content */
+      .content { padding: 16px; overflow-y: auto; }
+
+      /* Stats */
+      .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+      .stat-card { padding: 12px 14px; }
+      .stat-value { font-size: 20px; }
+
+      /* Table: hide less important columns */
+      thead th:nth-child(1),
+      thead th:nth-child(4),
+      thead th:nth-child(6),
+      thead th:nth-child(8),
+      td:nth-child(1),
+      td:nth-child(4),
+      td:nth-child(6),
+      td:nth-child(8) { display: none; }
+      td { padding: 10px 10px; font-size: 11px; }
+      thead th { padding: 8px 10px; }
+      .table-toolbar { flex-wrap: wrap; gap: 8px; }
+      .search-input { width: 100%; }
+
+      /* Detail panel: full screen */
+      .detail-panel { width: 100%; border-left: none; top: 0; }
+      .detail-actions { flex-wrap: wrap; }
+      .detail-actions .btn { flex: 1; min-width: 120px; text-align: center; }
+
+      /* Confirm box */
+      .confirm-box { width: calc(100vw - 32px); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>imomap Admin</h1>
+    <p>Nur für authorisierte Nutzer</p>
+    <div class="login-field">
+      <label>E-Mail</label>
+      <input type="email" id="loginEmail" placeholder="admin@example.com" />
+    </div>
+    <div class="login-field">
+      <label>Passwort</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" />
+    </div>
+    <button class="login-btn" id="loginBtn">Anmelden</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">imo<span>map</span>.at</div>
+    <div class="topbar-badge">Admin</div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbarUser"></span>
+      <button class="logout-btn" id="logoutBtn">Abmelden</button>
+    </div>
+  </div>
+  <div class="main">
+    <nav class="sidebar">
+      <button class="nav-item active" data-page="overview">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Übersicht
+      </button>
+      <button class="nav-item" data-page="inserate">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Inserate
+      </button>
+      <button class="nav-item" data-page="meldungen">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Meldungen
+        <span class="nav-badge" id="meldungenBadge" style="display:none"></span>
+      </button>
+    </nav>
+
+    <div class="content">
+
+      <!-- ÜBERSICHT -->
+      <div class="page active" id="page-overview">
+        <div class="page-header">
+          <div class="page-title">Übersicht</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Inserate gesamt</div>
+            <div class="stat-value" id="statTotal">–</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Aktiv</div>
+            <div class="stat-value green" id="statAktiv">–</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Inaktiv</div>
+            <div class="stat-value" id="statInaktiv">–</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Offene Meldungen</div>
+            <div class="stat-value red" id="statMeldungen">–</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <span style="font-size:12px;font-weight:600;color:var(--ink-3)">Neueste Inserate</span>
+          </div>
+          <table>
+            <thead><tr>
+              <th>Titel</th><th>Typ</th><th>Preis</th><th>Ort</th><th>Status</th><th>Erstellt</th>
+            </tr></thead>
+            <tbody id="overviewTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- INSERATE -->
+      <div class="page" id="page-inserate">
+        <div class="page-header">
+          <div class="page-title">Inserate</div>
+          <div class="page-count" id="inserateCount"></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <input class="search-input" id="inserateSearch" placeholder="Suchen…" />
+            <select class="filter-sel" id="inserateStatus">
+              <option value="">Alle Status</option>
+              <option value="aktiv">Aktiv</option>
+              <option value="inaktiv">Inaktiv</option>
+            </select>
+            <select class="filter-sel" id="inserateTyp">
+              <option value="">Alle Typen</option>
+              <option value="wohnung">Wohnung</option>
+              <option value="haus">Haus</option>
+              <option value="grundstueck">Grundstück</option>
+              <option value="gewerbe">Gewerbe</option>
+            </select>
+          </div>
+          <table>
+            <thead><tr>
+              <th></th><th>Titel</th><th>Typ</th><th>Modus</th><th>Preis</th><th>Ort</th><th>Status</th><th>Erstellt</th>
+            </tr></thead>
+            <tbody id="inserateTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MELDUNGEN -->
+      <div class="page" id="page-meldungen">
+        <div class="page-header">
+          <div class="page-title">Meldungen</div>
+          <div class="page-count" id="meldungenCount"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Inserat</th><th>Gemeldet am</th><th>Nachricht</th><th>Aktion</th>
+            </tr></thead>
+            <tbody id="meldungenTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detailOverlay"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-head">
+    <h2 id="panelTitle">–</h2>
+    <button class="close-btn" id="panelClose">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="detail-body" id="panelBody"></div>
+  <div class="detail-actions" id="panelActions"></div>
+</div>
+
+<!-- CONFIRM -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Bist du sicher?</h3>
+    <p id="confirmText"></p>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" id="confirmCancel">Abbrechen</button>
+      <button class="btn btn-danger" id="confirmOk">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const SUPABASE_URL  = 'https://gpodsuuugvwzldhfsrbv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb2RzdXV1Z3Z3emxkaGZzcmJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MjM3MjUsImV4cCI6MjA5MjQ5OTcyNX0.GrRyrh6BQNwGgHJAUaRRmsPS-jkhzXvACU9N9gih5LY';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser = null;
+let allInserate = [];
+let allMeldungen = [];
+let activePanelId = null;
+let editMode = false;
+
+/* ── AUTH ── */
+async function init() {
+  const { data } = await sb.auth.getSession();
+  if (data?.session?.user) {
+    currentUser = data.session.user;
+    showApp();
+  }
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session?.user) { currentUser = session.user; showApp(); }
+    else { currentUser = null; showLogin(); }
+  });
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').classList.remove('visible');
+}
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('topbarUser').textContent = currentUser.email;
+  loadAll();
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const err      = document.getElementById('loginErr');
+  err.textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) err.textContent = 'Falsche E-Mail oder Passwort.';
+});
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+document.getElementById('logoutBtn').addEventListener('click', () => sb.auth.signOut());
+
+/* ── DATA ── */
+async function loadAll() {
+  await Promise.all([loadInserate(), loadMeldungen()]);
+  renderOverview();
+}
+
+async function loadInserate() {
+  const { data, error } = await sb
+    .from('inserate')
+    .select('*')
+    .order('erstellt_am', { ascending: false });
+  if (!error) allInserate = data || [];
+  renderInserate();
+}
+
+async function loadMeldungen() {
+  const { data, error } = await sb
+    .from('kontaktanfragen')
+    .select('*')
+    .eq('absender_name', '[Meldung]')
+    .order('erstellt_am', { ascending: false });
+  if (!error) allMeldungen = data || [];
+  const n = allMeldungen.length;
+  const badge = document.getElementById('meldungenBadge');
+  badge.textContent = n;
+  badge.style.display = n > 0 ? '' : 'none';
+  document.getElementById('statMeldungen').textContent = n;
+  renderMeldungen();
+}
+
+/* ── RENDER OVERVIEW ── */
+function renderOverview() {
+  const total   = allInserate.length;
+  const aktiv   = allInserate.filter(i => i.status === 'aktiv').length;
+  const inaktiv = total - aktiv;
+  document.getElementById('statTotal').textContent   = total;
+  document.getElementById('statAktiv').textContent   = aktiv;
+  document.getElementById('statInaktiv').textContent = inaktiv;
+
+  const tbody = document.getElementById('overviewTableBody');
+  const recent = allInserate.slice(0, 10);
+  tbody.innerHTML = recent.length === 0
+    ? `<tr><td colspan="6"><div class="empty-state">Keine Inserate</div></td></tr>`
+    : recent.map(i => rowHTML(i, false)).join('');
+  tbody.querySelectorAll('tr[data-id]').forEach(tr =>
+    tr.addEventListener('click', () => openPanel(tr.dataset.id)));
+}
+
+/* ── RENDER INSERATE ── */
+function renderInserate() {
+  const search = (document.getElementById('inserateSearch')?.value || '').toLowerCase();
+  const status = document.getElementById('inserateStatus')?.value || '';
+  const typ    = document.getElementById('inserateTyp')?.value || '';
+
+  let list = allInserate.filter(i => {
+    if (status && i.status !== status) return false;
+    if (typ    && i.typ    !== typ)    return false;
+    if (search) {
+      const haystack = [i.titel, i.ort, i.strasse, i.plz].join(' ').toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('inserateCount').textContent = `${list.length} Inserate`;
+  const tbody = document.getElementById('inserateTableBody');
+  const meldungIds = new Set(allMeldungen.map(m => m.inserat_id));
+  tbody.innerHTML = list.length === 0
+    ? `<tr><td colspan="8"><div class="empty-state">Keine Treffer</div></td></tr>`
+    : list.map(i => rowHTML(i, meldungIds.has(i.id))).join('');
+  tbody.querySelectorAll('tr[data-id]').forEach(tr =>
+    tr.addEventListener('click', () => openPanel(tr.dataset.id)));
+}
+
+function rowHTML(i, flagged) {
+  const preis = i.preis_auf_anfrage ? 'Auf Anfrage' : (i.preis ? '€ ' + Number(i.preis).toLocaleString('de-AT') : '–');
+  const datum = i.erstellt_am ? new Date(i.erstellt_am).toLocaleDateString('de-AT') : '–';
+  const ort   = [i.plz, i.ort].filter(Boolean).join(' ') || '–';
+  return `<tr data-id="${i.id}" ${flagged ? 'class="flagged"' : ''}>
+    <td>${flagged ? '<span class="flag-icon" title="Gemeldet">⚑</span>' : ''}</td>
+    <td class="title-cell">${esc(i.titel || '–')}</td>
+    <td>${esc(i.typ || '–')}</td>
+    <td><span class="badge badge-${i.modus}">${esc(i.modus || '–')}</span></td>
+    <td>${esc(preis)}</td>
+    <td>${esc(ort)}</td>
+    <td><span class="badge badge-${i.status}">${esc(i.status || '–')}</span></td>
+    <td>${datum}</td>
+  </tr>`;
+}
+
+/* ── RENDER MELDUNGEN ── */
+function renderMeldungen() {
+  document.getElementById('meldungenCount').textContent = `${allMeldungen.length} Meldungen`;
+  const tbody = document.getElementById('meldungenTableBody');
+  if (!allMeldungen.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">Keine Meldungen</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allMeldungen.map(m => {
+    const inserat = allInserate.find(i => i.id === m.inserat_id);
+    const titel   = inserat ? esc(inserat.titel || '–') : `<span style="color:var(--ink-4)">${esc(m.inserat_id || '–')}</span>`;
+    const datum   = m.erstellt_am ? new Date(m.erstellt_am).toLocaleDateString('de-AT') : '–';
+    return `<tr>
+      <td style="font-weight:500">${titel}</td>
+      <td>${datum}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.nachricht || '–')}</td>
+      <td>
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="openPanel('${m.inserat_id}')">Inserat</button>
+        <button class="btn btn-danger" style="font-size:11px;padding:4px 10px;margin-left:4px" onclick="deleteMeldung('${m.id}',this)">Löschen</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── DETAIL PANEL ── */
+function openPanel(id) {
+  const inserat = allInserate.find(i => i.id === id);
+  if (!inserat) return;
+  activePanelId = id;
+  editMode = false;
+  renderPanel(inserat);
+  document.getElementById('detailOverlay').classList.add('visible');
+  document.getElementById('detailPanel').classList.add('visible');
+}
+
+function closePanel() {
+  activePanelId = null;
+  document.getElementById('detailOverlay').classList.remove('visible');
+  document.getElementById('detailPanel').classList.remove('visible');
+}
+
+function renderPanel(inserat) {
+  document.getElementById('panelTitle').textContent = inserat.titel || '–';
+  const meldungen = allMeldungen.filter(m => m.inserat_id === inserat.id);
+  const preis = inserat.preis_auf_anfrage ? 'Auf Anfrage' : (inserat.preis ? '€ ' + Number(inserat.preis).toLocaleString('de-AT') : '–');
+  const datum = inserat.erstellt_am ? new Date(inserat.erstellt_am).toLocaleDateString('de-AT', {day:'2-digit',month:'2-digit',year:'numeric'}) : '–';
+
+  if (editMode) {
+    document.getElementById('panelBody').innerHTML = `
+      <div class="edit-field"><label>Titel</label><input id="eTitle" value="${esc(inserat.titel||'')}" /></div>
+      <div class="edit-field"><label>Status</label>
+        <select id="eStatus">
+          <option value="aktiv" ${inserat.status==='aktiv'?'selected':''}>Aktiv</option>
+          <option value="inaktiv" ${inserat.status==='inaktiv'?'selected':''}>Inaktiv</option>
+        </select>
+      </div>
+      <div class="edit-field"><label>Preis (€)</label><input id="ePreis" type="number" value="${inserat.preis||''}" /></div>
+      <div class="edit-field"><label>Fläche (m²)</label><input id="eFlaeche" type="number" value="${inserat.flaeche_wohn||''}" /></div>
+      <div class="edit-field"><label>Zimmer</label><input id="eZimmer" type="number" step="0.5" value="${inserat.zimmer||''}" /></div>
+      <div class="edit-field"><label>Beschreibung</label><textarea id="eBeschreibung">${esc(inserat.beschreibung||'')}</textarea></div>
+    `;
+    document.getElementById('panelActions').innerHTML = `
+      <button class="btn btn-primary" id="saveBtn">Speichern</button>
+      <button class="btn btn-ghost" id="cancelEditBtn">Abbrechen</button>
+    `;
+    document.getElementById('saveBtn').addEventListener('click', () => saveInserat(inserat.id));
+    document.getElementById('cancelEditBtn').addEventListener('click', () => { editMode = false; renderPanel(inserat); });
+    return;
+  }
+
+  document.getElementById('panelBody').innerHTML = `
+    ${meldungen.length > 0 ? `
+      <div class="detail-section">
+        <div class="detail-section-title">⚑ ${meldungen.length} Meldung${meldungen.length>1?'en':''}</div>
+        ${meldungen.map(m => `
+          <div class="meldung-card">
+            <div class="meldung-card-body">${esc(m.nachricht||'(keine Nachricht)')}</div>
+            <div class="meldung-card-date">${m.erstellt_am ? new Date(m.erstellt_am).toLocaleDateString('de-AT') : ''}</div>
+          </div>`).join('')}
+      </div>` : ''}
+    <div class="detail-section">
+      <div class="detail-section-title">Basisinfos</div>
+      <div class="detail-grid">
+        <div class="detail-field"><div class="detail-field-label">Status</div><div class="detail-field-value"><span class="badge badge-${inserat.status}">${esc(inserat.status||'–')}</span></div></div>
+        <div class="detail-field"><div class="detail-field-label">Erstellt</div><div class="detail-field-value">${datum}</div></div>
+        <div class="detail-field"><div class="detail-field-label">Typ</div><div class="detail-field-value">${esc(inserat.typ||'–')}</div></div>
+        <div class="detail-field"><div class="detail-field-label">Modus</div><div class="detail-field-value">${esc(inserat.modus||'–')}</div></div>
+        <div class="detail-field"><div class="detail-field-label">Preis</div><div class="detail-field-value">${esc(preis)}</div></div>
+        <div class="detail-field"><div class="detail-field-label">Fläche</div><div class="detail-field-value">${inserat.flaeche_wohn ? inserat.flaeche_wohn + ' m²' : '–'}</div></div>
+        <div class="detail-field"><div class="detail-field-label">Zimmer</div><div class="detail-field-value">${inserat.zimmer||'–'}</div></div>
+        <div class="detail-field"><div class="detail-field-label">Etage</div><div class="detail-field-value">${esc(inserat.etage||'–')}</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Adresse</div>
+      <div class="detail-grid">
+        <div class="detail-field full"><div class="detail-field-label">Straße</div><div class="detail-field-value">${esc([inserat.strasse, inserat.hausnummer].filter(Boolean).join(' ')||'–')}</div></div>
+        <div class="detail-field"><div class="detail-field-label">PLZ / Ort</div><div class="detail-field-value">${esc([inserat.plz, inserat.ort].filter(Boolean).join(' ')||'–')}</div></div>
+        <div class="detail-field"><div class="detail-field-label">Bundesland</div><div class="detail-field-value">${esc(inserat.bundesland||'–')}</div></div>
+      </div>
+    </div>
+    ${inserat.beschreibung ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Beschreibung</div>
+      <div style="font-size:12px;color:var(--ink-2);line-height:1.6;white-space:pre-wrap">${esc(inserat.beschreibung)}</div>
+    </div>` : ''}
+    <div class="detail-section">
+      <div class="detail-section-title">Kontakt / Inserent</div>
+      <div class="detail-grid">
+        <div class="detail-field"><div class="detail-field-label">Name</div><div class="detail-field-value">${esc(inserat.inserent_name||'–')}</div></div>
+        <div class="detail-field"><div class="detail-field-label">E-Mail</div><div class="detail-field-value">${esc(inserat.inserent_email||'–')}</div></div>
+        <div class="detail-field"><div class="detail-field-label">Telefon</div><div class="detail-field-value">${esc(inserat.inserent_tel||'–')}</div></div>
+        <div class="detail-field"><div class="detail-field-label">User-ID</div><div class="detail-field-value" style="font-size:10px;color:var(--ink-4)">${esc(inserat.user_id||'–')}</div></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('panelActions').innerHTML = `
+    <button class="btn btn-primary" id="editBtn">Bearbeiten</button>
+    <button class="btn btn-warn" id="toggleStatusBtn">${inserat.status === 'aktiv' ? 'Deaktivieren' : 'Aktivieren'}</button>
+    <button class="btn btn-danger" id="deleteBtn">Löschen</button>
+    <a class="btn btn-ghost" href="/inserat/${inserat.id}" target="_blank">Ansehen ↗</a>
+  `;
+  document.getElementById('editBtn').addEventListener('click', () => { editMode = true; renderPanel(inserat); });
+  document.getElementById('toggleStatusBtn').addEventListener('click', () => toggleStatus(inserat));
+  document.getElementById('deleteBtn').addEventListener('click', () => confirmDelete(inserat.id, inserat.titel));
+}
+
+async function saveInserat(id) {
+  const updates = {
+    titel:        document.getElementById('eTitle').value.trim(),
+    status:       document.getElementById('eStatus').value,
+    preis:        parseFloat(document.getElementById('ePreis').value) || null,
+    flaeche_wohn: parseFloat(document.getElementById('eFlaeche').value) || null,
+    zimmer:       parseFloat(document.getElementById('eZimmer').value) || null,
+    beschreibung: document.getElementById('eBeschreibung').value.trim() || null,
+  };
+  const { error } = await sb.from('inserate').update(updates).eq('id', id);
+  if (error) { showToast('Fehler: ' + error.message); return; }
+  showToast('Gespeichert');
+  await loadInserate();
+  const updated = allInserate.find(i => i.id === id);
+  if (updated) { editMode = false; renderPanel(updated); }
+}
+
+async function toggleStatus(inserat) {
+  const newStatus = inserat.status === 'aktiv' ? 'inaktiv' : 'aktiv';
+  const { error } = await sb.from('inserate').update({ status: newStatus }).eq('id', inserat.id);
+  if (error) { showToast('Fehler'); return; }
+  showToast(`Status: ${newStatus}`);
+  await loadInserate();
+  const updated = allInserate.find(i => i.id === inserat.id);
+  if (updated) renderPanel(updated);
+}
+
+function confirmDelete(id, titel) {
+  document.getElementById('confirmText').textContent = `"${titel}" wird dauerhaft gelöscht.`;
+  document.getElementById('confirmOverlay').classList.add('visible');
+  document.getElementById('confirmOk').onclick = async () => {
+    document.getElementById('confirmOverlay').classList.remove('visible');
+    const { error } = await sb.from('inserate').delete().eq('id', id);
+    if (error) { showToast('Fehler: ' + error.message); return; }
+    showToast('Inserat gelöscht');
+    closePanel();
+    await loadAll();
+  };
+}
+document.getElementById('confirmCancel').addEventListener('click', () =>
+  document.getElementById('confirmOverlay').classList.remove('visible'));
+
+async function deleteMeldung(id, btn) {
+  btn.disabled = true;
+  const { error } = await sb.from('kontaktanfragen').delete().eq('id', id);
+  if (error) { showToast('Fehler'); btn.disabled = false; return; }
+  showToast('Meldung gelöscht');
+  await loadMeldungen();
+}
+window.deleteMeldung = deleteMeldung;
+window.openPanel = openPanel;
+
+/* ── NAVIGATION ── */
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+  });
+});
+
+/* ── FILTERS ── */
+document.getElementById('inserateSearch').addEventListener('input', renderInserate);
+document.getElementById('inserateStatus').addEventListener('change', renderInserate);
+document.getElementById('inserateTyp').addEventListener('change', renderInserate);
+
+/* ── PANEL CLOSE ── */
+document.getElementById('panelClose').addEventListener('click', closePanel);
+document.getElementById('detailOverlay').addEventListener('click', closePanel);
+
+/* ── HELPERS ── */
+function esc(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+init();
+</script>
+</body>
+</html>

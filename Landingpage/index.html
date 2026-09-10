@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>imoMAP.at - Immobilien mit echter Adresse | Österreich</title>
+  <meta name="description" content="Immobilien kaufen, mieten und inserieren in Österreich. Jedes Inserat mit genauer Straßenangabe — kein ungefährer Standort." />
+  <meta name="keywords" content="Immobilien Österreich, Wohnung kaufen Wien, Haus mieten, Immobiliensuche, imomap, Grundstück kaufen" />
+  <meta name="author" content="imomap" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://imomap.at/" />
+
+  <link rel="icon" type="image/svg+xml" href="/icon/favicon-32.svg" />
+  <link rel="icon" type="image/svg+xml" sizes="32x32" href="/icon/favicon-32.svg" />
+  <link rel="icon" type="image/svg+xml" sizes="16x16" href="/icon/favicon-16.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon/icon-96-dark.svg" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#0d0d0d" />
+
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://imomap.at/" />
+  <meta property="og:site_name"   content="imomap" />
+  <meta property="og:title" content="imoMAP.at - Immobilien einfach finden" />
+  <meta property="og:description" content="Immobilien einfach finden in Österreich — mit genauer Adresse." />
+  <meta property="og:image"  content="https://imomap.netlify.app/og-image.jpg" />
+
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale"      content="de_AT" />
+
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:site"        content="@imomap_at" />
+  <meta name="twitter:title"       content="imomap — Immobilien mit echter Adresse" />
+  <meta name="twitter:description" content="Österreichs erste Immobilienplattform mit verpflichtender Straßenangabe." />
+  <meta name="twitter:image" content="https://imomap.netlify.app/og-image.jpg" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "imomap",
+    "url": "https://imomap.at",
+    "description": "Immobilienplattform für Österreich mit verpflichtender Straßenangabe",
+    "inLanguage": "de-AT",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": { "@type": "EntryPoint", "urlTemplate": "https://imomap.at/?suche={search_term_string}" },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+        <clipPath id="pin-r"><rect x="40" y="0" width="40" height="80"/></clipPath>
+        <clipPath id="pin-l"><rect x="0"  y="0" width="40" height="80"/></clipPath>
+        <path clip-path="url(#pin-l)" d="M40 11C28 11 19 20 19 31C19 45 40 69 40 69C40 69 61 45 61 31C61 20 52 11 40 11Z" fill="#1a56db"/>
+        <path clip-path="url(#pin-r)" d="M40 11C28 11 19 20 19 31C19 45 40 69 40 69C40 69 61 45 61 31C61 20 52 11 40 11Z" fill="#1a56db" opacity="0.3"/>
+        <line x1="40" y1="23" x2="32" y2="31" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+        <line x1="40" y1="23" x2="48" y2="31" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="32" y1="31" x2="32" y2="41" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+        <line x1="48" y1="31" x2="48" y2="41" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="32" y1="41" x2="48" y2="41" stroke="#0d0d0d" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="40" y1="35" x2="40" y2="41" stroke="#0d0d0d" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <span class="logo-text">imo<span class="logo-map">MAP</span></span>
+    </div>
+
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle" title="Dunkel/Hell wechseln">
+        <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="icon-sun"  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <div class="topbar-inbox-wrap" id="topbarInboxWrap" style="display:none">
+        <button class="theme-toggle" id="topbarInboxBtn" title="Postfach">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </button>
+        <span class="topbar-inbox-badge" id="topbarInboxBadge" style="display:none"></span>
+      </div>
+      <div class="auth-area" id="authArea">
+        <button class="btn-ghost" id="btnAnmelden">Anmelden</button>
+      </div>
+      <button class="btn-primary" id="btnInserieren">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Inserieren
+      </button>
+      <!-- Hamburger: nur auf Mobile sichtbar -->
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menü öffnen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Nav Dropdown -->
+  <div class="mobile-nav-menu" id="mobileNavMenu">
+    <div id="mobileNavContent"></div>
+  </div>
+
+  <main class="layout">
+
+    <!-- ── LEFT SIDEBAR ── -->
+    <aside class="sidebar-left" id="sidebarLeft">
+      <section class="fs">
+        <div class="type-grid">
+          <button class="type-btn active" data-type="wohnung" data-modus="kaufen">
+            <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="9" width="9" height="10"/><rect x="11" y="9" width="9" height="10"/><line x1="2" y1="9" x2="11" y2="9"/><line x1="11" y1="9" x2="20" y2="9"/><line x1="5" y1="19" x2="5" y2="14"/><line x1="14" y1="19" x2="14" y2="14"/></svg>
+            <span class="type-btn-label">Wohnung</span>
+            <span class="type-btn-sub">Kaufen</span>
+          </button>
+          <button class="type-btn active" data-type="wohnung" data-modus="mieten">
+            <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="9" width="9" height="10"/><rect x="11" y="9" width="9" height="10"/><line x1="2" y1="9" x2="11" y2="9"/><line x1="11" y1="9" x2="20" y2="9"/><line x1="5" y1="19" x2="5" y2="14"/><line x1="14" y1="19" x2="14" y2="14"/><circle cx="19.5" cy="5.5" r="2" stroke-width="1.4"/><line x1="21" y1="7" x2="22.5" y2="8.5" stroke-width="1.4"/></svg>
+            <span class="type-btn-label">Wohnung</span>
+            <span class="type-btn-sub">Mieten</span>
+          </button>
+          <button class="type-btn active" data-type="haus" data-modus="kaufen">
+            <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l5-4 5 4v8H3z"/><path d="M11 11l5-4 5 4v8h-8"/><line x1="6" y1="19" x2="6" y2="14"/><line x1="3" y1="19" x2="16" y2="19"/></svg>
+            <span class="type-btn-label">Haus</span>
+            <span class="type-btn-sub">Kaufen</span>
+          </button>
+          <button class="type-btn active" data-type="haus" data-modus="mieten">
+            <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l5-4 5 4v8H3z"/><path d="M11 11l5-4 5 4v8h-8"/><line x1="6" y1="19" x2="6" y2="14"/><line x1="3" y1="19" x2="16" y2="19"/><circle cx="19.5" cy="6.5" r="2" stroke-width="1.4"/><line x1="21" y1="8" x2="22.5" y2="9.5" stroke-width="1.4"/></svg>
+            <span class="type-btn-label">Haus</span>
+            <span class="type-btn-sub">Mieten</span>
+          </button>
+        </div>
+      </section>
+      <div class="div"></div>
+      <section class="fs">
+        <span class="flbl">Bundesland</span>
+        <div class="sw">
+          <select id="bundesland" class="fsel">
+            <option value="wien">Wien</option>
+            <option value="noe">Niederösterreich</option>
+            <option value="ooe">Oberösterreich</option>
+            <option value="sbg">Salzburg</option>
+            <option value="tirol">Tirol</option>
+            <option value="stmk">Steiermark</option>
+            <option value="ktn">Kärnten</option>
+            <option value="vbg">Vorarlberg</option>
+            <option value="bgld">Burgenland</option>
+          </select>
+          <svg class="sarr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </section>
+      <section class="fs bz-section">
+        <div class="flbl-row">
+          <span class="flbl">Bezirk / Gemeinde</span>
+          <span class="fcount" id="bzCount"></span>
+        </div>
+        <div class="bz-list" id="bezirkList"></div>
+      </section>
+      <div class="div"></div>
+      <section class="fs">
+        <span class="flbl">Preis (€)</span>
+        <div class="range-row">
+          <input type="text" class="fi" placeholder="Von" id="preisVon" />
+          <span class="rsep">–</span>
+          <input type="text" class="fi" placeholder="Bis" id="preisBis" />
+        </div>
+      </section>
+      <section class="fs">
+        <span class="flbl">Fläche (m²)</span>
+        <div class="range-row">
+          <input type="text" class="fi" placeholder="Min" id="flaecheMin" />
+          <span class="rsep">–</span>
+          <input type="text" class="fi" placeholder="Max" id="flaecheMax" />
+        </div>
+      </section>
+      <section class="fs">
+        <span class="flbl">Zimmer</span>
+        <div class="zbtns">
+          <button class="zbtn" data-z="1">1+</button>
+          <button class="zbtn" data-z="2">2+</button>
+          <button class="zbtn" data-z="3">3+</button>
+          <button class="zbtn" data-z="4">4+</button>
+          <button class="zbtn" data-z="5">5+</button>
+        </div>
+      </section>
+      <div class="sidebar-footer">
+        <button class="btn-search" id="searchBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Suchen
+        </button>
+        <button class="btn-filter-reset" id="filterResetBtn" onclick="resetAllFilters()">Filter zurücksetzen</button>
+      </div>
+    </aside>
+
+    <!-- ── MAP ── -->
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="map-controls">
+        <div class="map-pill">
+          <button class="layer-btn active" id="btnStreet" onclick="setLayer('street')">Karte</button>
+          <button class="layer-btn" id="btnSat" onclick="setLayer('satellite')">Satellit</button>
+        </div>
+        <button class="sv-btn" id="svBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20c0-3.314 2.686-6 6-6s6 2.686 6 6"/></svg>
+          <span>Street View</span>
+        </button>
+      </div>
+      <div class="map-legend">
+        <div class="li"><span class="ld" style="background:#1a56db"></span>Wohnung Kaufen</div>
+        <div class="li"><span class="ld" style="background:#93b4f0"></span>Wohnung Mieten</div>
+        <div class="li"><span class="ld" style="background:#0e7d5c"></span>Haus Kaufen</div>
+        <div class="li"><span class="ld" style="background:#6dbfa3"></span>Haus Mieten</div>
+      </div>
+      <div class="result-count" id="resultCount"></div>
+      <button class="meins-toggle" id="meinsToggle" style="display:none" onclick="toggleMeineInserate()">Meine Inserate anzeigen</button>
+      <div class="sv-overlay" id="svOverlay">
+        <div class="sv-header">
+          <span class="sv-title" id="svTitle">Street View</span>
+          <button class="sv-close" id="svClose">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Schließen
+          </button>
+        </div>
+        <div class="sv-frame-wrap">
+          <iframe id="svFrame" class="sv-frame" src="" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT SIDEBAR ── -->
+    <aside class="sidebar-right" id="sidebarRight">
+      <div class="detail-panel">
+        <div class="detail-empty" id="detailEmpty">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <p>Immobilie auswählen</p>
+        </div>
+        <div id="detailContent" style="display:none"></div>
+      </div>
+      <div class="contact-bar" id="contactBar" style="display:none">
+        <button class="btn-contact" id="btnContactFixed"></button>
+        <button class="btn-melden" id="btnMeldenFixed" style="display:none">Inserat melden</button>
+      </div>
+      <div class="photos-panel">
+        <div class="photos-empty" id="photosEmpty">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Fotos erscheinen hier</span>
+        </div>
+        <div class="photos-scroll" id="photosScroll" style="display:none"></div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Mobile filter button -->
+  <button class="mobile-filter-btn" id="mobileFilterBtn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+    Filter &amp; Suche
+  </button>
+
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+  <div class="mobile-sheet" id="mobileSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-close-btn" id="sheetCloseBtn" aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sheet-scroll" id="sheetScroll"></div>
+  </div>
+
+  <!-- Photo lightbox -->
+  <div class="lightbox" id="lightbox">
+    <button class="lb-close" id="lbClose">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="lightbox-img"><div class="lightbox-inner" id="lbImage"></div></div>
+    <div class="lightbox-controls">
+      <button class="lb-btn" id="lbPrev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="lb-dots" id="lbDots"></div>
+      <button class="lb-btn" id="lbNext"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="footer-copy">© 2026 imomap</span>
+      <span class="footer-sep">·</span>
+      <nav class="footer-links">
+        <button class="footer-link footer-link-btn" onclick="openLegal('impressum')">Impressum</button>
+        <span class="footer-sep">·</span>
+        <button class="footer-link footer-link-btn" onclick="openLegal('datenschutz')">Datenschutz</button>
+        <span class="footer-sep">·</span>
+        <button class="footer-link footer-link-btn" onclick="openLegal('agb')">AGB</button>
+        <span class="footer-sep">·</span>
+        <button class="footer-link footer-link-btn" onclick="openCookiePrefs()">Cookies</button>
+        <span class="footer-sep">·</span>
+        <span class="footer-link">Erstellt von
+          <a href="https://www.webwien.com/" target="_blank" rel="noopener noreferrer" class="webwien-link">
+            <span class="webwien-logo"><span class="webwien-web">Web</span><span class="webwien-wien">Wien</span></span>
+          </a>
+        </span>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- ── LEGAL OVERLAY ── -->
+  <div class="auth-overlay" id="legalOverlay" onclick="if(event.target===this)closeLegal()">
+    <div class="legal-modal">
+      <div class="legal-header">
+        <span class="legal-title" id="legalTitle"></span>
+        <button class="auth-close" onclick="closeLegal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="legal-body" id="legalBody"></div>
+    </div>
+  </div>
+
+  <!-- ── MEIN BEREICH MODAL ── -->
+  <div class="auth-overlay" id="meinBereichOverlay">
+    <div class="mein-bereich-modal" id="meinBereichModal">
+      <div class="mein-bereich-header">
+        <div class="mb-tabs">
+          <button class="mb-tab active" data-tab="inserate">Meine Inserate</button>
+          <button class="mb-tab" data-tab="postfach">Postfach <span class="mb-badge" id="postfachBadge" style="display:none"></span></button>
+          <button class="mb-tab" data-tab="gesendet">Gesendet</button>
+        </div>
+        <button class="auth-close" style="position:static" id="meinBereichClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="mein-bereich-body" id="meinBereichBody">
+        <!-- Inserate tab -->
+        <div id="mbTabInserate">
+          <div class="mein-bereich-loading" id="meinBereichLoading">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Inserate werden geladen...
+          </div>
+          <div id="meinBereichList"></div>
+        </div>
+        <!-- Postfach tab -->
+        <div id="mbTabPostfach" style="display:none">
+          <div class="mein-bereich-loading" id="postfachLoading" style="display:none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Nachrichten werden geladen...
+          </div>
+          <div id="postfachList"></div>
+        </div>
+        <!-- Gesendet tab -->
+        <div id="mbTabGesendet" style="display:none">
+          <div class="mein-bereich-loading" id="gesendetLoading" style="display:none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Nachrichten werden geladen...
+          </div>
+          <div id="gesendetList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KONTAKT MODAL ── -->
+  <div class="auth-overlay" id="kontaktOverlay">
+    <div class="auth-modal" id="kontaktModal">
+      <button class="auth-close" id="kontaktClose">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="auth-title" id="kontaktTitel">Kontakt aufnehmen</h2>
+      <p class="auth-sub" id="kontaktAdresse"></p>
+      <div class="auth-page active" id="kontaktForm">
+        <div class="auth-group">
+          <label class="auth-label">Ihr Name <span class="req">*</span></label>
+          <input type="text" class="form-input" id="kName" placeholder="Vor- und Nachname" />
+        </div>
+        <div class="auth-group">
+          <label class="auth-label">E-Mail <span class="req">*</span></label>
+          <input type="email" class="form-input" id="kEmail" placeholder="ihre@email.at" />
+        </div>
+        <div class="auth-group">
+          <label class="auth-label">Telefon</label>
+          <input type="tel" class="form-input" id="kTel" placeholder="+43 ..." />
+        </div>
+        <div class="auth-group">
+          <div class="k-checks">
+            <label class="k-check"><input type="checkbox" value="Ich interessiere mich für Ihr Angebot." /><span>Ich interessiere mich für Ihr Angebot.</span></label>
+            <label class="k-check"><input type="checkbox" value="Ist die Immobilie noch zu haben?" /><span>Ist die Immobilie noch zu haben?</span></label>
+            <label class="k-check"><input type="checkbox" value="Ich möchte einen Besichtigungstermin vereinbaren." /><span>Ich möchte einen Besichtigungstermin vereinbaren.</span></label>
+            <label class="k-check"><input type="checkbox" value="Können Sie mir nähere Informationen zukommen lassen?" /><span>Können Sie mir nähere Informationen zukommen lassen?</span></label>
+          </div>
+        </div>
+        <div class="auth-group">
+          <label class="auth-label">Nachricht <span style="color:var(--ink-4);font-weight:400">(optional)</span></label>
+          <textarea class="form-input form-textarea" id="kNachricht" rows="3" placeholder="Weitere Anmerkungen…"></textarea>
+        </div>
+        <div class="auth-error" id="kontaktError"></div>
+        <button class="auth-btn-primary" id="kontaktSendBtn">Nachricht senden</button>
+      </div>
+      <div class="auth-page" id="kontaktSuccess">
+        <div class="auth-success-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h2 class="auth-title">Nachricht gesendet!</h2>
+        <p class="auth-sub">Der Inserent wurde benachrichtigt und meldet sich bald bei Ihnen.</p>
+        <button class="auth-btn-primary" id="kontaktSchliessen">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MELDEN MODAL ── -->
+  <div class="auth-overlay" id="meldenOverlay" onclick="if(event.target===this)closeMelden()">
+    <div class="auth-modal" id="meldenModal">
+      <button class="auth-close" onclick="closeMelden()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="auth-page active" id="meldenForm">
+        <h2 class="auth-title">Inserat melden</h2>
+        <p class="auth-sub" id="meldenAdresse"></p>
+        <div class="auth-group">
+          <div class="k-checks">
+            <label class="k-check"><input type="checkbox" name="meldenGrund" value="Kein Immobilieninserat (falscher Inhalt)" /><span>Kein Immobilieninserat (falscher Inhalt)</span></label>
+            <label class="k-check"><input type="checkbox" name="meldenGrund" value="Spam oder Betrug" /><span>Spam oder Betrug</span></label>
+            <label class="k-check"><input type="checkbox" name="meldenGrund" value="Anstößige oder illegale Inhalte" /><span>Anstößige oder illegale Inhalte</span></label>
+            <label class="k-check"><input type="checkbox" name="meldenGrund" value="Falsche Angaben / irreführende Beschreibung" /><span>Falsche Angaben / irreführende Beschreibung</span></label>
+            <label class="k-check"><input type="checkbox" name="meldenGrund" value="Verdächtiger Nutzer / Missbrauch" /><span>Verdächtiger Nutzer / Missbrauch</span></label>
+          </div>
+        </div>
+        <div class="auth-group">
+          <label class="auth-label">Weitere Details <span style="color:var(--ink-4);font-weight:400">(optional)</span></label>
+          <textarea class="form-input form-textarea" id="meldenText" rows="3" placeholder="Beschreiben Sie das Problem…"></textarea>
+        </div>
+        <div class="auth-error" id="meldenError"></div>
+        <button class="auth-btn-primary" id="meldenSendBtn" onclick="submitMelden()">Meldung absenden</button>
+      </div>
+      <div class="auth-page" id="meldenSuccess">
+        <div class="auth-success-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h2 class="auth-title">Meldung erhalten!</h2>
+        <p class="auth-sub">Danke für den Hinweis. Wir prüfen das Inserat so bald wie möglich.</p>
+        <button class="auth-btn-primary" onclick="closeMelden()">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AUTH MODAL ── -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-modal" id="authModal">
+      <button class="auth-close" id="authClose">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Anmelden</button>
+        <button class="auth-tab" data-tab="register">Registrieren</button>
+      </div>
+      <form class="auth-page active" data-page="login" action="javascript:void(0)" autocomplete="on">
+        <h2 class="auth-title">Willkommen zurück</h2>
+        <p class="auth-sub">Melden Sie sich an um Inserate zu verwalten.</p>
+        <div class="auth-group">
+          <label class="auth-label">E-Mail</label>
+          <input type="email" class="form-input" id="loginEmail" name="email" placeholder="ihre@email.at" autocomplete="email" />
+        </div>
+        <div class="auth-group">
+          <label class="auth-label">Passwort</label>
+          <input type="password" class="form-input" id="loginPassword" name="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <label class="auth-remember"><input type="checkbox" id="loginRemember" /><span>Angemeldet bleiben</span></label>
+        <div class="auth-error" id="loginError"></div>
+        <button type="button" class="auth-btn-primary" id="loginBtn">Anmelden</button>
+        <p class="auth-switch">Noch kein Konto? <button type="button" class="auth-link" data-tab="register">Jetzt registrieren</button> · <button type="button" class="auth-link" data-tab="reset">Passwort vergessen?</button></p>
+      </form>
+      <div class="auth-page" data-page="reset">
+        <h2 class="auth-title">Passwort zurücksetzen</h2>
+        <p class="auth-sub">Wir senden Ihnen einen Link zum Zurücksetzen.</p>
+        <div class="auth-group">
+          <label class="auth-label">E-Mail</label>
+          <input type="email" class="form-input" id="resetEmail" placeholder="ihre@email.at" />
+        </div>
+        <div class="auth-error" id="resetError"></div>
+        <button class="auth-btn-primary" id="resetBtn">Link senden</button>
+        <p class="auth-switch"><button class="auth-link" data-tab="login">Zurück zum Login</button></p>
+      </div>
+      <div class="auth-page" data-page="reset-sent">
+        <div class="auth-success-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <h2 class="auth-title">E-Mail gesendet!</h2>
+        <p class="auth-sub">Prüfen Sie Ihr Postfach und klicken Sie den Link zum Zurücksetzen.</p>
+        <button class="auth-btn-primary" data-tab="login" id="resetDoneBtn">Zurück zum Login</button>
+      </div>
+      <div class="auth-page" data-page="new-password">
+        <h2 class="auth-title">Neues Passwort</h2>
+        <p class="auth-sub">Bitte wählen Sie ein neues Passwort.</p>
+        <div class="auth-group">
+          <label class="auth-label">Neues Passwort</label>
+          <input type="password" class="form-input" id="newPassword" placeholder="Mind. 8 Zeichen" />
+        </div>
+        <div class="auth-group">
+          <label class="auth-label">Passwort wiederholen</label>
+          <input type="password" class="form-input" id="newPasswordConfirm" placeholder="Mind. 8 Zeichen" />
+        </div>
+        <div class="auth-error" id="newPasswordError"></div>
+        <button class="auth-btn-primary" id="newPasswordBtn">Passwort speichern</button>
+      </div>
+      <div class="auth-page" data-page="register">
+        <h2 class="auth-title">Konto erstellen</h2>
+        <p class="auth-sub">Kostenlos registrieren und Inserate schalten.</p>
+        <div class="auth-group">
+          <label class="auth-label">Name</label>
+          <input type="text" class="form-input" id="registerName" placeholder="Vor- und Nachname" />
+        </div>
+        <div class="auth-group">
+          <label class="auth-label">E-Mail</label>
+          <input type="email" class="form-input" id="registerEmail" placeholder="ihre@email.at" />
+        </div>
+        <div class="auth-group">
+          <label class="auth-label">Passwort</label>
+          <input type="password" class="form-input" id="registerPassword" placeholder="Mind. 8 Zeichen" />
+        </div>
+        <div class="auth-error" id="registerError"></div>
+        <button class="auth-btn-primary" id="registerBtn">Konto erstellen</button>
+        <p class="auth-switch">Bereits registriert? <button class="auth-link" data-tab="login">Anmelden</button></p>
+      </div>
+      <div class="auth-page" data-page="success">
+        <div class="auth-success-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h2 class="auth-title">Fast geschafft!</h2>
+        <p class="auth-sub">Wir haben eine Bestätigungs-E-Mail gesendet. Bitte bestätigen Sie Ihre E-Mail-Adresse.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Menu Dropdown -->
+  <div class="user-menu" id="userMenu">
+    <button class="user-menu-item" id="menuMeineInserate">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+      Meine Inserate
+    </button>
+    <button class="user-menu-item" id="menuPostfach">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Postfach <span class="user-menu-badge" id="menuPostfachBadge" style="display:none"></span>
+    </button>
+    <div class="user-menu-divider"></div>
+    <button class="user-menu-item user-menu-logout" id="menuLogout">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Abmelden
+    </button>
+  </div>
+
+  <!-- ── INSERAT FORMULAR MODAL ── -->
+  <div class="form-overlay" id="formOverlay">
+    <div class="form-modal" id="formModal">
+      <div class="form-header">
+        <div class="form-header-left">
+          <div class="form-steps">
+            <div class="form-step active" data-step="1"><span class="step-num">1</span><span class="step-lbl">Eckdaten</span></div>
+            <div class="step-line"></div>
+            <div class="form-step" data-step="2"><span class="step-num">2</span><span class="step-lbl">Adresse</span></div>
+            <div class="step-line"></div>
+            <div class="form-step" data-step="3"><span class="step-num">3</span><span class="step-lbl">Details</span></div>
+            <div class="step-line"></div>
+            <div class="form-step" data-step="4"><span class="step-num">4</span><span class="step-lbl">Fotos</span></div>
+          </div>
+        </div>
+        <button class="form-close" id="formClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="form-body">
+        <!-- STEP 1 -->
+        <div class="form-page active" data-page="1">
+          <h2 class="form-title">Was möchten Sie inserieren?</h2>
+          <p class="form-sub">Wählen Sie Art und Modus Ihres Inserats.</p>
+          <div class="form-group">
+            <label class="form-label">Art &amp; Modus <span class="req">*</span></label>
+            <div class="type-select-grid" id="fTypModusGrid">
+              <button class="type-sel-btn active" data-typ="wohnung" data-modus="kaufen">
+                <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12L14 4l10 8v11a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M10 24v-8h8v8"/><path d="M10 16h8" stroke-width="1"/></svg>
+                <span class="fsel-main">Wohnung</span><span class="fsel-sub">Verkaufen</span>
+              </button>
+              <button class="type-sel-btn" data-typ="wohnung" data-modus="mieten">
+                <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12L14 4l10 8v11a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M10 24v-8h8v8"/><circle cx="21" cy="8" r="3.5" stroke-width="1.2"/><path d="M21 6.5v1.5l1 1" stroke-width="1.2"/></svg>
+                <span class="fsel-main">Wohnung</span><span class="fsel-sub">Vermieten</span>
+              </button>
+              <button class="type-sel-btn" data-typ="haus" data-modus="kaufen">
+                <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L14 3l11 9"/><path d="M6 10v13a1 1 0 001 1h14a1 1 0 001-1V10"/><path d="M11 24v-7h6v7"/><circle cx="14" cy="13" r="2.5" stroke-width="1.2"/></svg>
+                <span class="fsel-main">Haus</span><span class="fsel-sub">Verkaufen</span>
+              </button>
+              <button class="type-sel-btn" data-typ="haus" data-modus="mieten">
+                <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L14 3l11 9"/><path d="M6 10v13a1 1 0 001 1h14a1 1 0 001-1V10"/><path d="M11 24v-7h6v7"/><circle cx="21" cy="8" r="3.5" stroke-width="1.2"/><path d="M21 6.5v1.5l1 1" stroke-width="1.2"/></svg>
+                <span class="fsel-main">Haus</span><span class="fsel-sub">Vermieten</span>
+              </button>
+            </div>
+          </div>
+          <div id="fTypGrid" style="display:none"></div>
+          <div id="fModusGrid" style="display:none"></div>
+          <div class="form-group">
+            <label class="form-label">Titel des Inserats <span class="req">*</span></label>
+            <input type="text" class="form-input" id="fTitel" placeholder="z.B. Helle 3-Zimmer Wohnung mit Balkon" maxlength="80" />
+            <span class="form-hint">Klar und präzise — maximal 80 Zeichen</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preis (€) <span class="req">*</span></label>
+            <input type="number" class="form-input" id="fPreis" placeholder="z.B. 350000" min="1" />
+          </div>
+        </div>
+        <!-- STEP 2 -->
+        <div class="form-page" data-page="2">
+          <h2 class="form-title">Wo liegt die Immobilie?</h2>
+          <div class="form-group">
+            <label class="form-label">Adresse suchen</label>
+            <div class="addr-search-wrap">
+              <input type="text" class="form-input" id="fAddrSearch" placeholder="Straße, Ort eingeben..." autocomplete="off" />
+              <div class="addr-suggestions" id="addrSuggestions"></div>
+            </div>
+
+          </div>
+          <div class="addr-fields">
+            <div class="form-row">
+              <div class="form-group" style="flex:2"><label class="form-label">Straße <span class="req">*</span></label><input type="text" class="form-input" id="fStrasse" placeholder="Mariahilfer Straße" /></div>
+              <div class="form-group" style="flex:1"><label class="form-label">Hausnummer</label><input type="text" class="form-input" id="fHausnummer" placeholder="12" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:1"><label class="form-label">PLZ <span class="req">*</span></label><input type="text" class="form-input" id="fPlz" placeholder="1060" /></div>
+              <div class="form-group" style="flex:2"><label class="form-label">Ort <span class="req">*</span></label><input type="text" class="form-input" id="fOrt" placeholder="Wien" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:1">
+                <label class="form-label">Bundesland <span class="req">*</span></label>
+                <div class="form-select-wrap">
+                  <select class="form-input form-select" id="fBundesland">
+                    <option value="Wien">Wien</option><option value="Niederösterreich">Niederösterreich</option>
+                    <option value="Oberösterreich">Oberösterreich</option><option value="Salzburg">Salzburg</option>
+                    <option value="Tirol">Tirol</option><option value="Steiermark">Steiermark</option>
+                    <option value="Kärnten">Kärnten</option><option value="Vorarlberg">Vorarlberg</option>
+                    <option value="Burgenland">Burgenland</option>
+                  </select>
+                  <svg class="form-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+              <div class="form-group" style="flex:1"><label class="form-label">Bezirk / Gemeinde</label><input type="text" class="form-input" id="fBezirk" placeholder="Wird automatisch erkannt" readonly title="Bezirk wird automatisch aus der Adresse abgeleitet" /></div>
+            </div>
+          </div>
+          <div class="addr-map-preview visible" id="addrMapPreview">
+            <div id="formMiniMap"></div>
+            <div class="addr-map-label" id="addrMapLabel">Auf Karte klicken um Standort zu setzen</div>
+          </div>
+        </div>
+        <!-- STEP 3 -->
+        <div class="form-page" data-page="3">
+          <h2 class="form-title">Details zur Immobilie</h2>
+          <div class="detail-form-grid">
+            <div class="form-group"><label class="form-label">Wohnfläche (m²) <span class="req">*</span></label><input type="number" class="form-input" id="fFlaeche" placeholder="z.B. 85" min="1" /></div>
+            <div class="form-group"><label class="form-label">Zimmer <span class="req">*</span></label><input type="number" class="form-input" id="fZimmer" placeholder="z.B. 3" min="1" step="0.5" /></div>
+            <div class="form-group"><label class="form-label">Etage <span class="req">*</span></label><input type="text" class="form-input" id="fEtage" placeholder="z.B. 2. OG" /></div>
+            <div class="form-group">
+              <label class="form-label">Lift <span class="req">*</span></label>
+              <div class="seg-select" id="fLiftGrid">
+                <button type="button" class="seg-sel-btn" data-val="Ja">Ja</button>
+                <button type="button" class="seg-sel-btn" data-val="Nein">Nein</button>
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label">Baujahr</label><input type="number" class="form-input" id="fBaujahr" placeholder="z.B. 1990" min="1800" max="2030" /></div>
+            <div class="form-group">
+              <label class="form-label">Heizung</label>
+              <div class="form-select-wrap">
+                <select class="form-input form-select" id="fHeizung">
+                  <option value="">— wählen —</option>
+                  <option>Fernwärme</option><option>Gastherme</option><option>Gaszentralheizung</option><option>Fußbodenheizung</option>
+                  <option>Wärmepumpe</option><option>Ölheizung</option><option>Elektroheizung</option><option>Pelletheizung</option>
+                </select>
+                <svg class="form-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Zustand</label>
+              <div class="form-select-wrap">
+                <select class="form-input form-select" id="fZustand">
+                  <option value="">— wählen —</option>
+                  <option>Erstbezug / Neubau</option><option>Renoviert</option><option>Gepflegt</option>
+                  <option>Sanierungsbedürftig</option><option>Denkmalschutz</option>
+                </select>
+                <svg class="form-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:4px;">
+            <label class="form-label">Weitere Ausstattung</label>
+            <div class="ausstattung-grid" id="fAusstattung">
+              <label class="ausstattung-item"><input type="checkbox" value="Balkon" /><span>Balkon</span></label>
+              <label class="ausstattung-item"><input type="checkbox" value="Terrasse" /><span>Terrasse</span></label>
+              <label class="ausstattung-item"><input type="checkbox" value="Garage" /><span>Garage</span></label>
+              <label class="ausstattung-item"><input type="checkbox" value="Klimaanlage" /><span>Klimaanlage</span></label>
+            </div>
+          </div>
+          <input type="hidden" id="fBeschreibung" value="" />
+        </div>
+        <!-- STEP 4 -->
+        <div class="form-page" data-page="4">
+          <h2 class="form-title">Fotos hochladen</h2>
+          <p class="form-sub">Inserate mit Fotos erhalten bis zu 5× mehr Anfragen.</p>
+          <div class="photo-upload-zone" id="photoDropZone">
+            <input type="file" id="photoFileInput" accept="image/*" multiple style="display:none" />
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--ink-4)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <p class="dropzone-title">Fotos hier ablegen</p>
+            <p class="dropzone-sub">oder</p>
+            <button class="btn-upload-select" onclick="document.getElementById('photoFileInput').click()">Fotos auswählen</button>
+            <p class="dropzone-hint">JPG, PNG — max. 10 MB pro Foto</p>
+          </div>
+          <div class="photo-preview-grid" id="photoPreviewGrid"></div>
+        </div>
+      </div>
+      <!-- Contact bar: lives outside scroll, above footer, only shown on step 4 -->
+      <div class="form-contact-bar" id="formContactBar" style="display:none">
+        <label class="form-label">Ihre Kontaktdaten <span class="req">*</span></label>
+        <div class="form-row" style="margin-top:4px;">
+          <input type="text" class="form-input" id="fKontaktName" placeholder="Vor- und Nachname *" />
+          <input type="tel"  class="form-input" id="fKontaktTel"  placeholder="Telefonnummer" />
+        </div>
+        <input type="email" class="form-input" id="fKontaktEmail" placeholder="E-Mail-Adresse *" style="margin-top:6px;" />
+      </div>
+      <div class="form-footer">
+        <button class="form-btn-back" id="formBtnBack" style="visibility:hidden">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Zurück
+        </button>
+        <div class="form-step-indicator" id="formStepIndicator">Schritt 1 von 4</div>
+        <button class="form-btn-next" id="formBtnNext">
+          Weiter
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Erfolgs-Meldung -->
+  <div class="form-success" id="formSuccess">
+    <div class="success-inner">
+      <div class="success-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h3>Inserat eingereicht!</h3>
+      <p>Ihr Inserat wird geprüft und in Kürze freigeschaltet.</p>
+      <button class="form-btn-next" onclick="document.getElementById('formSuccess').classList.remove('visible')">Schließen</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/script.js"></script>
+
+  <!-- ── COOKIE BANNER ── -->
+  <div class="cookie-banner" id="cookieBanner" style="display:none">
+    <div class="cookie-banner-inner">
+      <div class="cookie-banner-text">
+        <strong>Wir verwenden Cookies</strong>
+        <p>Neben notwendigen Cookies setzen wir auch Analyse- und Marketing-Cookies ein, um unser Angebot zu verbessern. Sie können Ihre Einstellungen jederzeit anpassen.</p>
+      </div>
+      <div class="cookie-banner-actions">
+        <button class="cookie-btn-settings" onclick="openCookiePrefs()">Einstellungen</button>
+        <button class="cookie-btn-necessary" onclick="acceptNecessary()">Nur notwendige</button>
+        <button class="cookie-btn-accept" onclick="acceptAll()">Alle akzeptieren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── COOKIE PREFERENCES MODAL ── -->
+  <div class="cookie-overlay" id="cookieOverlay" style="display:none" onclick="if(event.target===this)closeCookiePrefs()">
+    <div class="cookie-modal">
+      <div class="cookie-modal-header">
+        <span class="cookie-modal-title">Cookie-Einstellungen</span>
+        <button class="modal-close-btn" onclick="closeCookiePrefs()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="cookie-modal-body">
+        <p class="cookie-modal-intro">Wählen Sie, welche Cookies Sie zulassen möchten. Notwendige Cookies können nicht deaktiviert werden, da sie für den Betrieb der Website erforderlich sind.</p>
+        <div class="cookie-category">
+          <div class="cookie-cat-header">
+            <div class="cookie-cat-info">
+              <span class="cookie-cat-name">Notwendige Cookies</span>
+              <span class="cookie-cat-desc">Authentifizierung, Session-Management (Supabase Auth). Immer aktiv.</span>
+            </div>
+            <div class="cookie-toggle cookie-toggle-disabled">
+              <div class="cookie-toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+        <div class="cookie-category">
+          <div class="cookie-cat-header">
+            <div class="cookie-cat-info">
+              <span class="cookie-cat-name">Analyse-Cookies</span>
+              <span class="cookie-cat-desc">Helfen uns zu verstehen, wie Besucher die Website nutzen (z.B. Seitenaufrufe, Verweildauer).</span>
+            </div>
+            <button class="cookie-toggle" id="toggleAnalyse" onclick="toggleCookiePref('analyse')" aria-label="Analyse-Cookies umschalten">
+              <div class="cookie-toggle-knob"></div>
+            </button>
+          </div>
+        </div>
+        <div class="cookie-category">
+          <div class="cookie-cat-header">
+            <div class="cookie-cat-info">
+              <span class="cookie-cat-name">Marketing-Cookies</span>
+              <span class="cookie-cat-desc">Ermöglichen personalisierte Werbung und das Messen von Kampagnenerfolgen.</span>
+            </div>
+            <button class="cookie-toggle" id="toggleMarketing" onclick="toggleCookiePref('marketing')" aria-label="Marketing-Cookies umschalten">
+              <div class="cookie-toggle-knob"></div>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="cookie-modal-footer">
+        <button class="cookie-btn-necessary" onclick="savePrefsAndClose()">Auswahl speichern</button>
+        <button class="cookie-btn-accept" onclick="acceptAll()">Alle akzeptieren</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    var KEY = 'imomap_cookie_consent';
+    function getPrefs() { try { return JSON.parse(localStorage.getItem(KEY)); } catch(e) { return null; } }
+    function savePrefs(p) { localStorage.setItem(KEY, JSON.stringify(p)); }
+    function applyToggles(p) {
+      var tA = document.getElementById('toggleAnalyse');
+      var tM = document.getElementById('toggleMarketing');
+      if (tA) tA.classList.toggle('active', !!p.analyse);
+      if (tM) tM.classList.toggle('active', !!p.marketing);
+    }
+    window.openCookiePrefs = function() {
+      var p = getPrefs() || { analyse: false, marketing: false };
+      window._pendingPrefs = JSON.parse(JSON.stringify(p));
+      applyToggles(p);
+      document.getElementById('cookieOverlay').style.display = 'flex';
+      document.getElementById('cookieBanner').style.display = 'none';
+    };
+    window.closeCookiePrefs = function() {
+      document.getElementById('cookieOverlay').style.display = 'none';
+      window._pendingPrefs = null;
+    };
+    window.toggleCookiePref = function(type) {
+      var p = window._pendingPrefs || getPrefs() || { analyse: false, marketing: false };
+      p[type] = !p[type];
+      window._pendingPrefs = p;
+      applyToggles(p);
+    };
+    window.savePrefsAndClose = function() {
+      var p = window._pendingPrefs || getPrefs() || { analyse: false, marketing: false };
+      p.decided = true;
+      savePrefs(p);
+      window._pendingPrefs = null;
+      closeCookiePrefs();
+    };
+    window.acceptAll = function() {
+      var p = { analyse: true, marketing: true, decided: true };
+      savePrefs(p);
+      window._pendingPrefs = null;
+      applyToggles(p);
+      document.getElementById('cookieOverlay').style.display = 'none';
+      document.getElementById('cookieBanner').style.display = 'none';
+    };
+    window.acceptNecessary = function() {
+      savePrefs({ analyse: false, marketing: false, decided: true });
+      document.getElementById('cookieBanner').style.display = 'none';
+    };
+    var existing = getPrefs();
+    if (!existing || !existing.decided) {
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('cookieBanner').style.display = 'block';
+      });
+    }
+  })();
+  </script>
+</body>
+</html>

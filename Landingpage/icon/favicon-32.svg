@@ -1,0 +1,13 @@
+<svg width="32" height="32" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="80" height="80" rx="16" fill="#0d0d0d"/>
+  <clipPath id="r32"><rect x="40" y="0" width="40" height="80"/></clipPath>
+  <clipPath id="l32"><rect x="0" y="0" width="40" height="80"/></clipPath>
+  <path clip-path="url(#l32)" d="M40 11C28 11 19 20 19 31C19 45 40 69 40 69C40 69 61 45 61 31C61 20 52 11 40 11Z" fill="#1a56db"/>
+  <path clip-path="url(#r32)" d="M40 11C28 11 19 20 19 31C19 45 40 69 40 69C40 69 61 45 61 31C61 20 52 11 40 11Z" fill="#1a56db" opacity="0.3"/>
+  <line x1="40" y1="23" x2="32" y2="31" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+  <line x1="40" y1="23" x2="48" y2="31" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="31" x2="32" y2="41" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+  <line x1="48" y1="31" x2="48" y2="41" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="41" x2="48" y2="41" stroke="#0d0d0d" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="40" y1="35" x2="40" y2="41" stroke="#0d0d0d" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
