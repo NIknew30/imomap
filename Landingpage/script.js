@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initMap() {
   map = L.map('map', {center:[48.2025,16.3524], zoom:15, zoomControl:true});
 layerStreet = L.tileLayer(
-  'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=31929e5e-e9f9-4e7f-869f-7d15a48e7505',
+  'https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png?api_key=31929e5e-e9f9-4e7f-869f-7d15a48e7505',
   {attribution:'© Stadia Maps © OpenStreetMap', maxZoom:20}
 ).addTo(map);
   layerSat = L.tileLayer(
