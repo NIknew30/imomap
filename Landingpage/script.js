@@ -1989,7 +1989,7 @@ function fillAddressFields(item) {
 function initFormMiniMap() {
   if (formMiniMap) return;
   formMiniMap = L.map('formMiniMap', { zoomControl: true, scrollWheelZoom: false });
-  L.tileLayer('https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png?api_key=31929e5e-e9f9-4e7f-869f-7d15a48e7505', {
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png?api_key=31929e5e-e9f9-4e7f-869f-7d15a48e7505', {
     attribution: '© Stadia Maps © OpenStreetMap', maxZoom: 20
   }).addTo(formMiniMap);
   formMiniMap.setView([48.2025, 16.3524], 12);
